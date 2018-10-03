@@ -90,8 +90,6 @@ function civicrm_api3_pdf_create($params) {
 
   // Optional template_email_id, if not default 0
   $templateEmailId = CRM_Utils_Array::value('body_template_id', $params, 0);
-  // Optional argument: use email subject from email template
-  $templateEmailUseSubject = 0;
 
   if ($templateEmailId) {
     if($version >= 4.4) {
@@ -130,7 +128,7 @@ function civicrm_api3_pdf_create($params) {
   }
 
   foreach($contactIds as $contactId){
-    $html_message = $htmlTemplate;
+    $htmlMessage = $htmlTemplate;
     list($details) = CRM_Utils_Token::getTokenDetails(array($contactId), $returnProperties, false, false, null, $tokens);
     $contact = reset( $details );
     if (isset($contact['do_not_mail']) && $contact['do_not_mail'] == TRUE) {
