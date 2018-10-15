@@ -96,6 +96,52 @@ class CRM_Pdfapi_Upgrader extends CRM_Pdfapi_Upgrader_Base {
   }
 
   /**
+   * update action params in existing usage for body_template_id and email_subject
+   */
+  public function upgrade_1003() {
+    $this->ctx->log->info('Applying update 1002 (introduce email and/or pdf activity)');
+    // if CiviRules installed
+    try {
+      $extensions = civicrm_api3('Extension', 'get');
+      foreach($extensions['values'] as $ext) {
+        if ($ext['key'] == 'org.civicoop.civirules' &&$ext['status'] == 'installed') {
+
+          $query = "SELECT id FROM civirule_action WHERE name = %1 AND class_name = %2";
+          $actionId = CRM_Core_DAO::singleValueQuery($query, array(
+            1 => array('pdfapi_send', 'String'),
+            2 => array('CRM_Pdfapi_CivirulesAction', 'String'),
+          ));
+          if ($actionId) {
+            // update params in rule action if any present
+            $query = "SELECT id, action_params FROM civirule_rule_action WHERE action_id = %1";
+            $dao = CRM_Core_DAO::executeQuery($query, array(1 => array((int) $actionId, 'Integer')));
+            while ($dao->fetch()) {
+              $actionParams = unserialize($dao->action_params);
+              $updateRuleAction = FALSE;
+              if (!isset($actionParams['pdf_activity'])) {
+                $actionParams['pdf_activity'] = 0;
+                $updateRuleAction = TRUE;
+              }
+              if (!isset($actionParams['email_activity'])) {
+                $actionParams['email_activity'] = "";
+                $updateRuleAction = TRUE;
+              }
+              if ($updateRuleAction) {
+                $ruleAction = new CRM_Civirules_BAO_RuleAction();
+                $ruleAction->id = $dao->id;
+                $ruleAction->action_params = serialize($actionParams);
+                $ruleAction->save();
+              }
+            }
+          }
+        }
+      }
+    } catch (CiviCRM_API3_Exception $ex) {
+    }
+    return TRUE;
+  }
+
+  /**
    * Example: Work with entities usually not available during the install step.
    *
    * This method can be used for any post-install tasks. For example, if a step

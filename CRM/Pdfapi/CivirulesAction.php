@@ -37,8 +37,8 @@ class CRM_Pdfapi_CivirulesAction extends CRM_CivirulesActions_Generic_Api {
    * @access protected
    */
   protected function alterApiParameters($parameters, CRM_Civirules_TriggerData_TriggerData $triggerData) {
-    //this method could be overridden in subclasses to alter parameters to meet certain criteria
     $parameters['contact_id'] = $triggerData->getContactId();
+    // todo check if the file_on_case is yes, if so, try to set the case_id
     return $parameters;
   }
 
@@ -52,7 +52,7 @@ class CRM_Pdfapi_CivirulesAction extends CRM_CivirulesActions_Generic_Api {
    * $access public
    */
   public function getExtraDataInputUrl($ruleActionId) {
-    return CRM_Utils_System::url('civicrm/civirules/actions/pdfapi', 'rule_action_id='.$ruleActionId);
+    return CRM_Utils_System::url('civicrm/civirules/actions/pdfapi', 'rule_action_id=' . $ruleActionId);
   }
 
   /**
@@ -71,10 +71,19 @@ class CRM_Pdfapi_CivirulesAction extends CRM_CivirulesActions_Generic_Api {
     ));
     if (isset($params['body_template_id']) && !empty($params['body_template_id'])) {
       $bodyTemplateTitle = $this->getTemplateTitle($params['body_template_id']);
-      $prettyTxt .= ' , template for e-mail body ' . $bodyTemplateTitle;
+      $prettyTxt .= ts(' , template for e-mail body "') . $bodyTemplateTitle . '"';
     }
     if (isset($params['email_subject']) && !empty($params['email_subject'])) {
-      $prettyTxt .= ' and subject of the email: ' . $params['email_subject'];
+      $prettyTxt .= ts(' and subject of the email: "') . $params['email_subject'] . '"';
+    }
+    if (isset($params['pdf_activity']) && $params['pdf_activity'] == TRUE) {
+      $prettyTxt .= ts(', record Print Pdf activity for each contact');
+    }
+    if (isset($params['email_activity']) && $params['email_activity'] == TRUE) {
+      $prettyTxt .= ts(', record Email activity for each contact');
+    }
+    if (isset($params['file_on_case']) && $params['file_on_case'] == TRUE) {
+      $prettyTxt .= ts(', file on case');
     }
     return $prettyTxt;
   }
