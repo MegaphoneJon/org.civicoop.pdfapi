@@ -137,7 +137,8 @@ class CRM_Pdfapi_Pdf {
         $this->createPdfActivities($contactId);
       }
     }
-    $this->_fileName = uniqid(CRM_Utils_String::munge($messageTemplates->msg_title).'_', TRUE) . '.pdf';
+    $hash = md5(uniqid($messageTemplates->msg_title,TRUE));
+    $this->_fileName = CRM_Utils_String::munge($messageTemplates->msg_title).'_' . $hash . '.pdf';
     $this->_cleanName = CRM_Utils_String::munge($messageTemplates->msg_title) . '.pdf';
     $pdf = CRM_Utils_PDF_Utils::html2pdf($html, $this->_fileName, TRUE, $messageTemplates->pdf_format_id);
     // if no email_activity, use temp folder otherwise use customFileUploadDir
