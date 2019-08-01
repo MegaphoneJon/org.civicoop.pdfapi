@@ -14,9 +14,9 @@ class CRM_Pdfapi_Pdf {
   private $_messageTemplatesEmail = NULL;
   private $_htmlMessage = NULL;
   private $_subject = NULL;
-  private $_fileName = NULL;
+  protected $_fileName = NULL;
   private $_cleanName = NULL;
-  private $_fullPathName = NULL;
+  protected $_fullPathName = NULL;
   private $_version = NULL;
   private $_from = NULL;
   private $_contactIds = array();
@@ -207,7 +207,7 @@ class CRM_Pdfapi_Pdf {
    *
    * @throws
    */
-  private function processPdf() {
+  protected function processPdf() {
     if (isset($this->_apiParams['to_email']) && !empty($this->_apiParams['to_email'])) {
       $this->sendPdf($this->_apiParams['to_email']);
     }
@@ -277,7 +277,7 @@ class CRM_Pdfapi_Pdf {
   /**
    * Method to save the PDF as a file in the customFileUploadDir
    */
-  private function createFileForPDF() {
+  protected function createFileForPDF() {
     try {
       $file = civicrm_api3('File', 'create', array(
         'mime_type' => 'application/pdf',
