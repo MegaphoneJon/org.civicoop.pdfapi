@@ -15,7 +15,7 @@ class CRM_Pdfapi_Upgrader extends CRM_Pdfapi_Upgrader_Base {
   public function install() {
     // if CiviRules installed
     try {
-      $extensions = civicrm_api3('Extension', 'get');
+      $extensions = civicrm_api3('Extension', 'get', ['options' => ['limit' => 0]]);
       foreach($extensions['values'] as $ext) {
         if ($ext['key'] == 'org.civicoop.civirules' && $ext['status'] == 'installed') {
           if (civicrm_api3('CiviRuleAction', 'getcount', ['name' => "pdfapi_send"]) === 0) {
@@ -59,7 +59,7 @@ class CRM_Pdfapi_Upgrader extends CRM_Pdfapi_Upgrader_Base {
     $this->ctx->log->info('Applying update 1002 (introduce email body template and email subject');
     // if CiviRules installed
     try {
-      $extensions = civicrm_api3('Extension', 'get');
+      $extensions = civicrm_api3('Extension', 'get', ['options' => ['limit' => 0]]);
       foreach($extensions['values'] as $ext) {
         if ($ext['key'] == 'org.civicoop.civirules' &&$ext['status'] == 'installed') {
 
@@ -105,7 +105,7 @@ class CRM_Pdfapi_Upgrader extends CRM_Pdfapi_Upgrader_Base {
     $this->ctx->log->info('Applying update 1002 (introduce email and/or pdf activity)');
     // if CiviRules installed
     try {
-      $extensions = civicrm_api3('Extension', 'get');
+      $extensions = civicrm_api3('Extension', 'get', ['options' => ['limit' => 0]]);
       foreach($extensions['values'] as $ext) {
         if ($ext['key'] == 'org.civicoop.civirules' &&$ext['status'] == 'installed') {
 
