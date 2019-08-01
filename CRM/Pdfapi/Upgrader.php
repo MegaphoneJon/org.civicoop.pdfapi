@@ -17,11 +17,14 @@ class CRM_Pdfapi_Upgrader extends CRM_Pdfapi_Upgrader_Base {
     try {
       $extensions = civicrm_api3('Extension', 'get');
       foreach($extensions['values'] as $ext) {
-        if ($ext['key'] == 'org.civicoop.civirules' &&$ext['status'] == 'installed') {
-          $this->executeSqlFile('sql/insertSendPDFAction.sql');
+        if ($ext['key'] == 'org.civicoop.civirules' && $ext['status'] == 'installed') {
+          if (civicrm_api3('CiviRuleAction', 'getcount', ['name' => "pdfapi_send"]) === 0) {
+            $this->executeSqlFile('sql/insertSendPDFAction.sql');
+          }
         }
       }
-    } catch (CiviCRM_API3_Exception $ex) {
+    }
+    catch (CiviCRM_API3_Exception $ex) {
     }
   }
 
