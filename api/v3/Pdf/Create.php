@@ -65,6 +65,13 @@ function _civicrm_api3_pdf_create_spec(&$spec) {
     'api.required' => 0,
     'type' => CRM_Utils_Type::T_INT,
   );
+  $spec['contribution_id'] = array(
+    'name' => 'contribution_id',
+    'title' => 'Contribution ID',
+    'description' => 'Generate contribution tokens based on these ID(s)',
+    'api.required' => 0,
+    'type' => CRM_Utils_Type::T_INT,
+  );
 }
 
 /**
