@@ -20,6 +20,7 @@ class CRM_Pdfapi_Pdf {
   private $_version = NULL;
   private $_from = NULL;
   private $_contactIds = array();
+  private $_contributionIds = array();
 
   public function __construct($params) {
     $this->_apiParams = $params;
@@ -41,6 +42,7 @@ class CRM_Pdfapi_Pdf {
       throw new API_Exception('Parameter contact_id must be a unique id or a list of ids separated by comma');
     }
     $this->_contactIds = explode(",", $this->_apiParams['contact_id']);
+    $this->_contributionIds = explode(",", $this->_apiParams['contribution_id']);
     $messageTemplates = $this->getMessageTemplates();
     $this->_subject = $messageTemplates->msg_subject;
     $htmlTemplate = $this->formatMessage($messageTemplates);
@@ -59,6 +61,15 @@ class CRM_Pdfapi_Pdf {
         $this->_emailSubject = $this->_messageTemplatesEmail->msg_subject;
       }
       $tokensEmail = CRM_Utils_Token::getTokens($this->_htmlMessageEmail);
+    }
+
+    // Build an array of contributions if present.
+    if ($this->_contributionIds && isset($messageTokens['contribution'])) {
+      try {
+        $contributions = civicrm_api3('contribution', 'get', ['id' => ['IN' => $this->_contributionIds]])['values'];
+      }
+      catch (CiviCRM_API3_Exception $ex) {
+      }
     }
 
     // get replacement text for these tokens
@@ -91,11 +102,20 @@ class CRM_Pdfapi_Pdf {
       CRM_Utils_Hook::tokens($hookTokens);
       $categories = array_keys($hookTokens);
 
+      // FIXME: We could use a single token array ($messageTokens OR $tokensEmail).  This would cut down on the most expensive function call
+      // and make it easier to consolidate this repeating code.
+      if ($contributions) {
+        // This won't work if a contact has multiple contributions.  But what code path leads to that scenario?
+        // It seems like only one contribution could be affected at a time.
+        $contributionKey = array_search($contactId, array_column($contributions, 'contact_id', 'contribution_id'));
+        $contribution = $contributions[$contributionKey];
+        $this->_htmlMessage = CRM_Utils_Token::replaceContributionTokens($this->_htmlMessage, $contribution, TRUE, $messageTokens);
+      }
       CRM_Utils_Token::replaceGreetingTokens($this->_htmlMessage, NULL, $contact['contact_id']);
       $this->_htmlMessage = CRM_Utils_Token::replaceDomainTokens($this->_htmlMessage, $domain, TRUE, $messageTokens, TRUE);
       $this->_htmlMessage = CRM_Utils_Token::replaceContactTokens($this->_htmlMessage, $contact, FALSE, $messageTokens, FALSE, TRUE);
       $this->_htmlMessage = CRM_Utils_Token::replaceComponentTokens($this->_htmlMessage, $contact, $messageTokens, TRUE);
-      $this->_htmlMessage = CRM_Utils_Token::replaceHookTokens($this->_htmlMessage, $contact , $categories, TRUE);
+      $this->_htmlMessage = CRM_Utils_Token::replaceHookTokens($this->_htmlMessage, $contact, $categories, TRUE);
       if (defined('CIVICRM_MAIL_SMARTY') && CIVICRM_MAIL_SMARTY) {
         $smarty = CRM_Core_Smarty::singleton();
         // also add the contact tokens to the template
@@ -106,6 +126,11 @@ class CRM_Pdfapi_Pdf {
       $html[] = $this->_htmlMessage;
 
       if ($templateEmailId) {
+        if ($contributions) {
+          $contributionKey = array_search($contactId, array_column($contributions, 'contact_id', 'contribution_id'));
+          $contribution = $contributions[$contributionKey];
+          $this->_htmlMessageEmail = CRM_Utils_Token::replaceContributionTokens($this->_htmlMessageEmail, $contribution, TRUE, $tokensEmail);
+        }
         CRM_Utils_Token::replaceGreetingTokens($this->_htmlMessageEmail, NULL, $contact['contact_id']);
         $this->_htmlMessageEmail = CRM_Utils_Token::replaceDomainTokens($this->_htmlMessageEmail, $domain, TRUE, $tokensEmail, TRUE);
         $this->_htmlMessageEmail = CRM_Utils_Token::replaceContactTokens($this->_htmlMessageEmail, $contact, FALSE, $tokensEmail, FALSE, TRUE);
@@ -123,6 +148,11 @@ class CRM_Pdfapi_Pdf {
       }
 
       if (!empty($this->_emailSubject)) {
+        if ($contributions) {
+          $contributionKey = array_search($contactId, array_column($contributions, 'contact_id', 'contribution_id'));
+          $contribution = $contributions[$contributionKey];
+          $this->_emailSubject = CRM_Utils_Token::replaceContributionTokens($this->_emailSubject, $contribution, TRUE, $tokensEmail);
+        }
         $this->_emailSubject = CRM_Utils_Token::replaceDomainTokens($this->_emailSubject, $domain, TRUE, $tokensEmail, TRUE);
         $this->_emailSubject = CRM_Utils_Token::replaceContactTokens($this->_emailSubject, $contact, FALSE, $tokensEmail, FALSE, TRUE);
         $this->_emailSubject = CRM_Utils_Token::replaceComponentTokens($this->_emailSubject, $contact, $tokensEmail, TRUE);
