@@ -67,6 +67,16 @@ class CRM_Pdfapi_Pdf {
     if ($this->_contributionIds && isset($messageTokens['contribution'])) {
       try {
         $contributions = civicrm_api3('contribution', 'get', ['id' => ['IN' => $this->_contributionIds]])['values'];
+        // mail#46 - Display contribution custom fields properly
+        foreach ($contributions as $id => $contribution) {
+          if (!empty($messageTokens)) {
+            foreach ($contribution as $fieldName => $fieldValue) {
+              if (strpos($fieldName, 'custom_') === 0 && array_search($fieldName, $messageTokens['contribution']) !== FALSE) {
+                $contributions[$id][$fieldName] = CRM_Core_BAO_CustomField::displayValue($fieldValue, $fieldName);
+              }
+            }
+          }
+        }
       }
       catch (CiviCRM_API3_Exception $ex) {
       }
