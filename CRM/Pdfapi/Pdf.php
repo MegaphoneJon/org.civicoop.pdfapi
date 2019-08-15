@@ -66,7 +66,9 @@ class CRM_Pdfapi_Pdf {
     // Build an array of contributions if present.
     if ($this->_contributionIds && isset($messageTokens['contribution'])) {
       try {
-        $contributions = civicrm_api3('contribution', 'get', ['id' => ['IN' => $this->_contributionIds]])['values'];
+        foreach ($this->_contributionIds as $contributionId) {
+          $contributions = CRM_Contribute_BAO_Contribution::getContributionTokenValues($contributionId, $messageTokens)['values'];
+        }
       }
       catch (CiviCRM_API3_Exception $ex) {
       }
